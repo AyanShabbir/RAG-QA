@@ -1,7 +1,10 @@
+streamlit
 PyPDF2
 pdfplumber
-streamlit
 langchain
-google-generativeai
+google.generativeai
+langchain_google_genai
 faiss-cpu
 python-dotenv
+langchain-community
+PyPDF2
