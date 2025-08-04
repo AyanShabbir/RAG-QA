@@ -218,17 +218,19 @@ def create_vector_store_optimized(text_chunks):
     
     # Process in smaller batches to avoid timeout
     batch_size = 50
-    all_vectors = []
+    total_batches = (len(text_chunks) + batch_size - 1) // batch_size  # Ceiling division
     
     progress_bar = st.progress(0)
     status_text = st.empty()
     
-    for i in range(0, len(text_chunks), batch_size):
+    vector_store = None
+    
+    for batch_idx, i in enumerate(range(0, len(text_chunks), batch_size)):
         batch = text_chunks[i:i + batch_size]
-        status_text.text(f"Creating embeddings for batch {i//batch_size + 1}/{(len(text_chunks)-1)//batch_size + 1}...")
+        status_text.text(f"Creating embeddings for batch {batch_idx + 1}/{total_batches}...")
         
         try:
-            if i == 0:
+            if batch_idx == 0:
                 # Create initial vector store
                 vector_store = FAISS.from_texts(batch, embedding_model)
             else:
@@ -238,9 +240,13 @@ def create_vector_store_optimized(text_chunks):
                 
         except Exception as e:
             st.error(f"Error creating embeddings for batch: {str(e)}")
+            progress_bar.empty()
+            status_text.empty()
             return None
             
-        progress_bar.progress((i + batch_size) / len(text_chunks))
+        # Update progress (ensure it's between 0 and 1)
+        progress = min((batch_idx + 1) / total_batches, 1.0)
+        progress_bar.progress(progress)
         time.sleep(0.1)  # Small delay to prevent rate limiting
     
     progress_bar.empty()
